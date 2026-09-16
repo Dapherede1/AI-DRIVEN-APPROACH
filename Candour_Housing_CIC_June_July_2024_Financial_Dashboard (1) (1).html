@@ -1,0 +1,531 @@
+<!--
+CANDOUR HOUSING CIC — JUNE / JULY 2024 FINANCIAL DASHBOARD
+PROMPT-PROTOCOL DATA CONTROLS
+
+1. Source workbook:
+   Candour Housing TB Oct 23 - Sept 24 Consol.xlsx
+
+2. Authoritative period rule:
+   The Trial Balance heading is the authoritative reporting date, ahead of worksheet names or file labels.
+
+3. June source:
+   Worksheet: "Trial Balance June 24"
+   Heading: "As at 30 June 2024"
+   Validation status: PASS.
+
+4. July source exception:
+   Worksheet: "Trial Balance July 24"
+   Heading: "As at 31 August 2024"
+   The worksheet name and internal heading conflict.
+   Under the deterministic prompt protocol this cannot be certified as a valid 31 July 2024 month-end source without correction.
+   The dashboard therefore provides a "July 2024*" review view using the movement from the June YTD balances to the worksheet
+   named "Trial Balance July 24", but marks it REVIEW REQUIRED throughout. Those movements may cover more than one month if the
+   internal heading is correct.
+
+5. Monthly P&L derivation:
+   Monthly P&L values are derived deterministically from YTD movement:
+   June month = June YTD - May YTD.
+   July review movement = "Trial Balance July 24" YTD - June YTD.
+   June prior-month comparisons use May month = May YTD - April YTD.
+
+6. Permanent P&L mapping:
+   The existing Candour permanent P&L mapping register is used.
+   No residual catch-all mapping is introduced.
+   Account 445 Light, Power, Heating is not in the permanent P&L register and creates a +74.76 June movement because the account
+   existed in May YTD but is absent from June. It is shown explicitly as a mapping exception rather than silently classified.
+
+7. Permanent Balance Sheet mapping:
+   The existing Candour permanent Balance Sheet mapping register is used.
+   Void Works (806) remains permanently mapped to Non-current Liabilities per management instruction.
+   No Void Works balance is present in the June or July-review source sheets.
+   Account 850 Suspense appears in the July-review source with a 3,410.65 credit balance and is shown explicitly as a source-classified
+   current-liability exception because it is not in the permanent mapping register.
+   Account 860 Rounding is also not in the permanent register and is shown as an explicit de minimis source-classified adjustment.
+
+8. June monthly P&L:
+   Total income 210,071.37.
+   Direct housing costs 208,710.12.
+   Gross surplus 1,361.25.
+   Operating / administrative costs after direct housing costs, net of mapping exception, 46,403.42.
+   Net deficit 45,042.17.
+   No current-period corporation-tax movement is present.
+
+9. July review movement:
+   Total income 524,863.15.
+   Direct housing costs 355,515.92.
+   Gross surplus 169,347.23.
+   Other operating / administrative costs 73,960.72.
+   Net surplus 95,386.51.
+   These figures are mathematically derived from the source-sheet sequence but are NOT certified as a one-month July result because of
+   the source-heading conflict.
+
+10. KPI definitions:
+   Gross rent margin = Gross surplus / total income.
+   Direct housing cost ratio = Direct housing costs / total income.
+   Maintenance cost % = (Maintenance + Repairs & Maintenance) / total income.
+   Receivables-to-Income Ratio = Closing gross accounts receivable / current-period income.
+   Bad debt rate is represented as Bad Debt Provision Rate = closing bad debt provision / closing gross receivables.
+   People cost ratio = Salaries + Directors' Remuneration + Employer NI + Pension Costs, divided by income.
+   Operating cost ratio = total operating costs / income.
+   Directors' remuneration / payroll = Directors' Remuneration / total people costs.
+
+11. Metrics not supported by source:
+   Maintenance Cost per Asset (Top Five): Data not available — no asset/property-level maintenance dataset.
+   Debtor Collection Percentage: Data not available — amount due and cash collected are not separately provided.
+   Utility Recovery Rate: Data not available — recharge income is not identified as utility-specific.
+   Housing sector benchmarks: Data not available — no approved benchmark dataset is included in the source.
+
+12. All figures are management-analysis outputs and remain subject to professional review before external use.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Candour Housing CIC — June & July 2024 Financial Dashboard</title>
+<style>
+:root{
+  --navy:#112d4e;--navy2:#244e73;--red:#8b1e2d;--red2:#b04655;
+  --charcoal:#343a40;--muted:#6b7580;--bg:#eff2f5;--white:#fff;
+  --line:#d9dfe6;--soft:#f7f9fb;--green:#2e7d32;--greenbg:#eaf5eb;
+  --amber:#b7791f;--amberbg:#fff4d6;--danger:#b3261e;--dangerbg:#fcebea;
+  --shadow:0 6px 18px rgba(17,45,78,.09);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--charcoal);font-family:Inter,Calibri,Arial,sans-serif;line-height:1.42}
+.shell{max-width:1540px;margin:auto;padding:14px}
+.header{background:var(--white);border-top:5px solid var(--red);border-radius:10px;box-shadow:var(--shadow);padding:14px 17px;margin-bottom:9px}
+.header-row{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+h1,h2,h3,h4{color:var(--navy);margin-top:0}
+h1{font-size:1.55rem;margin:0}.sub{font-size:.8rem;color:var(--muted);margin-top:3px}
+.meta-row,.month-row{display:flex;gap:7px;flex-wrap:wrap}
+.meta{background:var(--soft);border:1px solid var(--line);border-left:3px solid var(--red);padding:6px 9px;border-radius:6px;min-width:115px}
+.meta small{display:block;font-size:.62rem;text-transform:uppercase;font-weight:800;color:var(--muted)}
+.meta b{font-size:.78rem;color:var(--navy)}
+.month-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:9px 0}
+.month-btn{border:1px solid var(--line);background:var(--white);color:var(--navy);font-weight:800;padding:8px 12px;border-radius:6px;cursor:pointer}
+.month-btn.active{background:var(--red);border-color:var(--red);color:white}
+.validation{font-size:.72rem;font-weight:800;padding:7px 10px;border-radius:6px}
+.validation.pass{background:var(--greenbg);color:var(--green);border:1px solid #b8d9bb}
+.validation.review{background:var(--amberbg);color:#795100;border:1px solid #e2c46d}
+.tabs{display:flex;gap:5px;overflow:auto;margin-bottom:9px}
+.tab{border:1px solid var(--line);background:var(--white);color:var(--navy);padding:9px 13px;border-radius:6px;font-weight:800;font-size:.79rem;cursor:pointer;white-space:nowrap}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--white);border:1px solid #e6eaf0;border-radius:9px;box-shadow:var(--shadow)}
+.pad{padding:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.kpi{padding:11px 12px;border-top:3px solid var(--red);min-height:138px}
+.kpi .label{font-size:.67rem;color:var(--muted);text-transform:uppercase;font-weight:900;letter-spacing:.3px}
+.kpi .value{font-size:1.45rem;color:var(--navy);font-weight:900;margin:7px 0}
+.kpi .value.na{font-size:.92rem;color:var(--amber);line-height:1.2}
+.compare{display:flex;align-items:center;gap:5px;font-size:.69rem;font-weight:800;background:var(--soft);border:1px solid var(--line);padding:5px 6px;border-radius:5px}
+.arrow.up{color:var(--green)}.arrow.down{color:var(--danger)}.arrow.flat{color:var(--amber)}
+.interp{font-size:.67rem;color:var(--muted);margin-top:6px}
+.grid-main{display:grid;grid-template-columns:.95fr 2.05fr;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stack{display:grid;gap:8px}
+.title{font-size:.96rem;margin:0 0 8px}
+.narrative{font-size:.81rem}
+.ragbox{padding:9px;border-radius:6px;margin-top:8px;font-size:.75rem;font-weight:700}
+.ragbox.red{background:var(--dangerbg);border:1px solid #edb6b1;border-left:4px solid var(--danger)}
+.ragbox.amber{background:var(--amberbg);border:1px solid #e3c778;border-left:4px solid var(--amber)}
+.obs{background:var(--soft);border-left:3px solid var(--red);padding:8px 9px;border-radius:5px;font-size:.75rem;margin-top:6px}
+.obs b{display:block;color:var(--navy);margin-bottom:2px}
+.chart-card{padding:12px}.bar-chart{height:250px;display:flex;align-items:flex-end;gap:14px;padding:28px 12px 26px;border-bottom:1px solid var(--line);position:relative}
+.bar-group{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:7px;height:100%}
+.bar{width:38%;min-width:28px;border-radius:6px 6px 0 0;position:relative;transition:.25s ease}
+.bar:hover{filter:brightness(.94)}
+.bar span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:.62rem;font-weight:800;white-space:nowrap;margin-bottom:4px;color:var(--charcoal)}
+.bar-labels{display:flex;justify-content:space-around;font-size:.68rem;color:var(--muted);padding-top:6px}
+.donut{width:205px;height:205px;border-radius:50%;margin:12px auto;position:relative}
+.donut:after{content:"";position:absolute;inset:43px;background:white;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line)}
+.legend{display:grid;gap:5px;font-size:.7rem}.legend div{display:flex;align-items:center;gap:6px}.sw{width:10px;height:10px;border-radius:2px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:.73rem}
+th{background:var(--navy);color:white;padding:7px;text-align:left;font-weight:800}
+td{padding:6px 7px;border-bottom:1px solid var(--line);vertical-align:top}
+.num{text-align:right;font-variant-numeric:tabular-nums}.neg{color:var(--danger);font-weight:700}.zero{color:#89939d}.amber-text{color:var(--amber);font-weight:800}
+.section td{background:#f3f6f8;color:var(--navy);font-weight:900;border-left:3px solid var(--red)}
+.total td{font-weight:900;color:var(--navy);border-top:2px solid var(--navy)}
+.grand td{font-weight:900;color:var(--navy);border-top:3px double var(--navy);background:#f0f5f8}
+.exception td{background:var(--amberbg);color:#6f541b}
+.rag{display:inline-flex;padding:3px 7px;border-radius:999px;font-size:.63rem;font-weight:900}
+.rag.amber{background:var(--amberbg);color:#785000}.rag.red{background:var(--dangerbg);color:#8f1913}.rag.green{background:var(--greenbg);color:#216c25}
+.statement{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:8px}.statement-main{padding:12px;overflow:auto}
+.statement-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;border-bottom:2px solid var(--red);padding-bottom:7px;margin-bottom:8px}
+.statement-head h2{font-size:1.03rem;margin:0}.statement-head span{font-size:.68rem;color:var(--muted)}
+.side{display:grid;gap:8px}.side-card{padding:12px}.side-card .big{font-size:1.35rem;color:var(--navy);font-weight:900}.side-card .small{font-size:.68rem;color:var(--muted);margin-top:3px}
+.top5-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.72rem}
+.footer{margin-top:9px;padding:8px 4px 2px;border-top:1px solid var(--line);text-align:center;color:#707a84;font-size:.65rem}
+.control-note{font-size:.7rem;padding:9px 10px;border-radius:6px;background:var(--amberbg);border:1px solid #e1c97d;color:#684f16;margin-bottom:8px}
+@media(max-width:1150px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-main,.statement{grid-template-columns:1fr}}
+@media(max-width:720px){.shell{padding:8px}.kpis{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.bar-chart{height:220px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="header">
+  <div class="header-row">
+    <div><h1>Candour Housing CIC — Financial Dashboard</h1><div class="sub">June 2024 and July 2024 review using the deterministic prompt protocol</div></div>
+    <div class="meta-row">
+      <div class="meta"><small>Entity</small><b>Candour Housing CIC</b></div>
+      <div class="meta"><small>Currency</small><b>GBP</b></div>
+      <div class="meta"><small>Source</small><b>Consolidated TB</b></div>
+    </div>
+  </div>
+</header>
+
+<div class="month-bar">
+  <div class="month-row">
+    <button class="month-btn active" data-month="june">June 2024</button>
+    <button class="month-btn" data-month="july">July 2024*</button>
+  </div>
+  <div id="validationBadge" class="validation pass">PASS — source heading confirms 30 June 2024</div>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="exec">1. Executive Summary</button>
+  <button class="tab" data-tab="metrics">2. Key Performance Metrics</button>
+  <button class="tab" data-tab="pnl">3. Profit &amp; Loss</button>
+  <button class="tab" data-tab="bs">4. Balance Sheet</button>
+</nav>
+
+<section class="panel active" id="exec">
+  <div id="execKpis" class="kpis"></div>
+  <div class="grid-main">
+    <div class="stack">
+      <div class="card pad narrative">
+        <h2 class="title">Executive Summary</h2>
+        <p id="businessDescription"></p>
+        <div id="healthVerdict" class="ragbox red"></div>
+      </div>
+      <div class="card pad">
+        <h3 class="title">Three Board Priorities</h3>
+        <div id="boardActions"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card chart-card"><h3 class="title">Income and Net Result</h3><div id="profitBars" class="bar-chart"></div><div class="bar-labels"><span>Income</span><span>Net result</span></div></div>
+      <div class="card chart-card"><h3 class="title">Balance Sheet Composition</h3><div id="execDonut" class="donut"></div><div id="execLegend" class="legend"></div></div>
+    </div>
+  </div>
+  <div class="footer">Candour Housing CIC — Financial Dashboard — Prepared by AI-assisted analysis — All figures subject to professional review before external use.</div>
+</section>
+
+<section class="panel" id="metrics">
+  <div id="metricCards" class="kpis"></div>
+  <div class="grid2">
+    <div class="card pad">
+      <h3 class="title">Maintenance Cost per Asset — Top Five</h3>
+      <div class="top5-row"><span>1. Asset-level maintenance record</span><span class="amber-text">Data not available</span></div>
+      <div class="top5-row"><span>2. Asset-level maintenance record</span><span class="amber-text">Data not available</span></div>
+      <div class="top5-row"><span>3. Asset-level maintenance record</span><span class="amber-text">Data not available</span></div>
+      <div class="top5-row"><span>4. Asset-level maintenance record</span><span class="amber-text">Data not available</span></div>
+      <div class="top5-row"><span>5. Asset-level maintenance record</span><span class="amber-text">Data not available</span></div>
+      <div class="interp">The Trial Balance does not contain property/asset identifiers for maintenance expenditure.</div>
+    </div>
+    <div class="card pad table-wrap">
+      <h3 class="title">Housing Sector Benchmark Comparison</h3>
+      <table>
+        <thead><tr><th>KPI</th><th>Current</th><th>Sector benchmark</th><th>RAG</th></tr></thead>
+        <tbody id="benchmarkBody"></tbody>
+      </table>
+      <div class="interp">No approved housing-sector benchmark dataset is contained in the supplied source. Amber indicates benchmark validation is outstanding.</div>
+    </div>
+  </div>
+  <div class="footer">Candour Housing CIC — Financial Dashboard — Prepared by AI-assisted analysis — All figures subject to professional review before external use.</div>
+</section>
+
+<section class="panel" id="pnl">
+  <div id="pnlKpis" class="kpis"></div>
+  <div id="periodControlNote" class="control-note" style="display:none"></div>
+  <div class="statement">
+    <div class="card statement-main">
+      <div class="statement-head"><h2>Statement of Profit and Loss</h2><span id="pnlPeriodLabel"></span></div>
+      <table><thead><tr><th>Line item</th><th class="num">Amount (£)</th></tr></thead><tbody id="pnlBody"></tbody></table>
+    </div>
+    <div class="side">
+      <div class="card side-card"><h3 class="title">Gross Rent Margin</h3><div id="sideGrossMargin" class="big"></div><div class="small">Gross surplus / total income.</div></div>
+      <div class="card side-card"><h3 class="title">Directors' Remuneration / Payroll</h3><div id="sideDirectors" class="big"></div><div class="small">Directors' remuneration divided by salaries, directors' remuneration, employer NI and pension costs.</div></div>
+      <div class="card side-card"><h3 class="title">Permanent Mapping Control</h3><div id="mappingStatus" class="small"></div></div>
+    </div>
+  </div>
+  <div class="footer">Candour Housing CIC — Financial Dashboard — Prepared by AI-assisted analysis — All figures subject to professional review before external use.</div>
+</section>
+
+<section class="panel" id="bs">
+  <div id="bsKpis" class="kpis"></div>
+  <div id="bsControlNote" class="control-note" style="display:none"></div>
+  <div class="statement">
+    <div class="card statement-main">
+      <div class="statement-head"><h2>Balance Sheet</h2><span id="bsPeriodLabel"></span></div>
+      <table><thead><tr><th>Line item</th><th class="num">Amount (£)</th></tr></thead><tbody id="bsBody"></tbody></table>
+    </div>
+    <div class="side">
+      <div class="card chart-card"><h3 class="title">Composition</h3><div id="bsDonut" class="donut"></div><div id="bsLegend" class="legend"></div></div>
+      <div class="card side-card"><h3 class="title">Gross Accounts Receivable</h3><div id="sideAR" class="big"></div><div class="small">Closing gross debtor balance.</div></div>
+      <div class="card side-card"><h3 class="title">Net Assets</h3><div id="sideNetAssets" class="big"></div><div class="small">Total assets less total liabilities.</div></div>
+    </div>
+  </div>
+  <div class="footer">Candour Housing CIC — Financial Dashboard — Prepared by AI-assisted analysis — All figures subject to professional review before external use.</div>
+</section>
+</div>
+
+<script>
+const data={
+ june:{
+   label:"June 2024", priorLabel:"May 2024", valid:true, heading:"As at 30 June 2024", rag:"RED",
+   validation:"PASS — source heading confirms 30 June 2024",
+   business:"Candour Housing CIC operates a housing-focused model in which rental income and the core rent element are the principal income streams, while property rents, utilities, maintenance and other housing-service costs drive a substantial share of expenditure. In June the organisation remained balance-sheet solvent, but monthly operating performance deteriorated sharply and cash resources reduced materially.",
+   verdict:"Financial health verdict: RED — June generated a 45,042.17 deficit, gross rent margin reduced to 0.6%, and cash represented only 18.5% of current liabilities despite positive net assets.",
+   actions:[
+    ["Restore housing-cost margin","Direct housing costs reached 208,710.12, equivalent to 99.4% of June income. Caretech rent and tenant utilities are the largest direct cost pressures and should be reconciled and challenged."],
+    ["Strengthen cash conversion","Gross receivables closed at 1,260,636.13 while cash fell to 140,591.10. The board should require aged-debt, collection and cash-conversion reporting."],
+    ["Resolve data and mapping exceptions","Account 445 Light, Power, Heating creates a 74.76 June adjustment but is not in the permanent P&L mapping register. It should be formally mapped or confirmed as a reclassification."]
+   ],
+   metrics:{
+    income:{v:210071.37,p:232135.70,t:"money",i:"Income decreased from the May monthly level."},
+    net:{v:-45042.17,p:23232.20,t:"money",i:"The business moved from a May surplus to a June deficit."},
+    grossMargin:{v:.00647994,p:.29043185,t:"pct",i:"Only 0.6% of income remained after direct housing costs."},
+    directRatio:{v:.99352006,p:.70956815,t:"pct",i:"Direct housing costs absorbed 99.4% of income."},
+    maintenancePct:{v:.06986821,p:.05138378,t:"pct",i:"Maintenance and repairs increased as a share of income."},
+    maintenanceAsset:{v:null,p:null,t:"na",i:"Asset-level maintenance data is not available."},
+    collection:{v:null,p:null,t:"na",i:"Cash collected versus amount due is not available in the Trial Balance."},
+    recvIncome:{v:6.00098971,p:5.23665283,t:"x",i:"Gross receivables equal about six months of June income."},
+    badDebt:{v:0,p:0,t:"pct",i:"No current bad debt provision balance is recorded in the June source."},
+    utility:{v:null,p:null,t:"na",i:"Utility-specific recovery income is not separately identifiable."},
+    people:{v:.12620368,p:.11420811,t:"pct",i:"People costs represented 12.6% of June income."},
+    opCost:{v:1.21441365,p:.89991975,t:"pct",i:"Operating costs exceeded income in June."},
+    directors:{v:.27582682,p:.27356368,t:"pct",i:"Directors' remuneration was 27.6% of total people costs."},
+    currentRatio:{v:1.93255089,p:3.05045693,t:"x",i:"Current assets still exceed current liabilities, but coverage weakened."},
+    cashRatio:{v:.18505689,p:.41731103,t:"x",i:"Cash covered only 18.5% of current liabilities."},
+    liabilitiesEquity:{v:1.40734015,p:.65096615,t:"x",i:"Liabilities increased materially relative to equity."},
+    netAssets:{v:610881.64,p:904529.11,t:"money",i:"Net assets remain positive but reduced from May."}
+   },
+   pnl:{
+    period:"For the month ended 30 June 2024",
+    lines:[
+      ["section","Turnover",0],["normal","Rental income",103114.84],["normal","Ineligible Costs",-362.04],
+      ["normal","Core Rent Element",103673.92],["normal","Void Charges",3644.65],["normal","Income from rechargeable costs",0],
+      ["normal","Less: Overpaid HB to be refunded",0],["total","Total income",210071.37],
+      ["section","Direct Housing Costs — management analytical grouping",0],
+      ["normal","Window Cleaning",-911.79],["normal","Cleaning",-1120.68],["normal","Grounds Maintenance",-3374.96],
+      ["normal","Maintenance",-12528.51],["normal","Fire Related Costs",-1891.20],["normal","Decorating",-900.00],
+      ["normal","Pest Control",-258.00],["normal","Council Tax",-1163.14],["normal","Tenant Utilities",-67854.12],
+      ["normal","Rent becoming due to Caretech",-114933.92],["normal","Rent due to other landlords",-1625.00],
+      ["normal","Repairs & Maintenance",-2148.80],["total","Total direct housing costs",-208710.12],
+      ["grand","Gross surplus",1361.25],
+      ["section","Operating / Administrative Costs",0],
+      ["normal","Bank Fees",-115.10],["normal","Professional Fees",-3608.00],["normal","Business Expenses",-54.00],
+      ["normal","Wages",-26596.01],["normal","Travel Expenses",-1037.26],["normal","IT software and consumables",-862.17],
+      ["normal","Insurance",-2184.70],["normal","Legal Expenses",-10500.00],["normal","Postage, Freight & Courier",-14.80],
+      ["normal","Staff Training",-1140.00],["normal","Telephone & Internet",-366.14],
+      ["exception","Mapping exception — Light, Power, Heating (445)",74.76],
+      ["grand","Operating deficit",-45042.17],["normal","Corporation Tax",0],["grand","Net deficit for the month",-45042.17]
+    ],
+    mapping:"Permanent P&L mapping applied. Account 445 remains an explicit mapping exception; no residual classification has been used."
+   },
+   bs:{
+    period:"As at 30 June 2024",
+    lines:[
+      ["section","Current Assets",0],["normal","Cash at bank",140591.10],["normal","Accounts receivable",1260636.13],
+      ["normal","Less: bad debt provision",0],["normal","Other receivables",10.00],["normal","Prepayments",45912.50],
+      ["normal","Accrued income",21044.47],["total","Total current assets",1468194.20],
+      ["section","Non-current Assets",0],["normal","Office equipment — net",210.40],["normal","Computer equipment — net",2195.30],
+      ["total","Total non-current assets",2405.70],["grand","Total assets",1470599.90],
+      ["section","Current Liabilities",0],["normal","Accounts payable",85597.04],["normal","Accruals",233000.00],
+      ["normal","PAYE payable",4425.87],["normal","National Insurance payable",8688.57],["normal","Corporation tax provision",33262.28],
+      ["normal","Tenant overpayments",25353.84],["normal","Rent overpayments refundable",15239.36],
+      ["normal","Pension contributions payable",2435.14],["normal","Rent payable to Caretech",351510.21],
+      ["normal","Student loan deductions payable",206.00],["exception","Rounding (860) — mapping exception",-0.05],
+      ["total","Total current liabilities",759718.26],
+      ["section","Non-current Liabilities",0],["normal","Void Works liability",0],["normal","Start-up loan — Caretech",100000.00],
+      ["total","Total non-current liabilities",100000.00],["total","Total liabilities",859718.26],["grand","Net assets",610881.64],
+      ["section","Equity",0],["normal","Ordinary share capital",10.00],["normal","Retained earnings",230919.33],
+      ["normal","Current financial-year result to date",379952.31],["grand","Total equity",610881.64]
+    ],
+    assets:1470599.90,liabilities:859718.26,equity:610881.64,ar:1260636.13
+   }
+ },
+ july:{
+   label:"July 2024*", priorLabel:"June 2024", valid:false, heading:"As at 31 August 2024", rag:"AMBER",
+   validation:"REVIEW REQUIRED — worksheet is named July 24 but internal heading says 31 August 2024",
+   business:"The worksheet labelled July 2024 shows a strong positive movement in income and profitability relative to June, but its internal Trial Balance heading states 31 August 2024. Under the prompt protocol, this period cannot be certified as a one-month July result until the source date is corrected or confirmed. The figures shown are therefore a controlled review view rather than a final July management account.",
+   verdict:"Financial health verdict: AMBER — the source-derived movement indicates improved profitability, but the reporting-period conflict is a fundamental validation exception and prevents the result being treated as a validated July month.",
+   actions:[
+    ["Resolve the reporting-date conflict first","Confirm whether the worksheet is genuinely July or whether it represents activity to 31 August. Until resolved, month-on-month conclusions should not be used for formal decisions."],
+    ["Review receivables quality","Gross receivables increased to 1,344,622.26 and a 105,933.20 bad debt provision appears in the source, producing a 7.9% provision rate."],
+    ["Maintain liquidity focus","Cash is 141,059.34 against current liabilities of 741,915.03. Although the candidate period shows a surplus, cash coverage remains low at about 19.0%."]
+   ],
+   metrics:{
+    income:{v:524863.15,p:210071.37,t:"money",i:"Source movement is substantially above June, but the period is not validated as one month."},
+    net:{v:95386.51,p:-45042.17,t:"money",i:"Source movement returns to surplus, subject to period validation."},
+    grossMargin:{v:.32265026,p:.00647994,t:"pct",i:"Gross margin improves in the source movement, subject to period validation."},
+    directRatio:{v:.67734974,p:.99352006,t:"pct",i:"Direct housing cost ratio improves versus June, but comparability is unconfirmed."},
+    maintenancePct:{v:.05113615,p:.06986821,t:"pct",i:"Maintenance share falls versus June in the source movement."},
+    maintenanceAsset:{v:null,p:null,t:"na",i:"Asset-level maintenance data is not available."},
+    collection:{v:null,p:null,t:"na",i:"Cash collected versus amount due is not available in the Trial Balance."},
+    recvIncome:{v:2.56185305,p:6.00098971,t:"x",i:"Ratio falls because the source movement contains materially more income; period comparability is unconfirmed."},
+    badDebt:{v:.07878287,p:0,t:"pct",i:"A 105,933.20 bad debt provision appears in the source, equal to 7.9% of gross receivables."},
+    utility:{v:null,p:null,t:"na",i:"Utility-specific recovery income is not separately identifiable."},
+    people:{v:.10163893,p:.12620368,t:"pct",i:"People-cost ratio declines in the source movement."},
+    opCost:{v:.81826404,p:1.21441365,t:"pct",i:"Operating costs fall below income in the source movement."},
+    directors:{v:.27261417,p:.27582682,t:"pct",i:"Directors' remuneration remains about 27% of people costs."},
+    currentRatio:{v:1.94541658,p:1.93255089,t:"x",i:"Current-asset coverage is broadly stable versus June."},
+    cashRatio:{v:.19012870,p:.18505689,t:"x",i:"Cash coverage improves slightly but remains low."},
+    liabilitiesEquity:{v:1.39404919,p:1.40734015,t:"x",i:"Leverage relative to equity improves marginally."},
+    netAssets:{v:603934.95,p:610881.64,t:"money",i:"Net assets reduce slightly from June."}
+   },
+   pnl:{
+    period:"July 2024 review movement — source heading states 31 August 2024",
+    lines:[
+      ["section","Turnover",0],["normal","Rental income",243954.42],["normal","Ineligible Costs",25653.76],
+      ["normal","Core Rent Element",248625.52],["normal","Void Charges",7726.78],["normal","Income from rechargeable costs",690.00],
+      ["normal","Less: Overpaid HB to be refunded",-1787.33],["total","Total income",524863.15],
+      ["section","Direct Housing Costs — management analytical grouping",0],
+      ["normal","Window Cleaning",-3329.98],["normal","Cleaning",-2249.38],["normal","Grounds Maintenance",-10818.43],
+      ["normal","Maintenance",-25478.49],["normal","Fire Related Costs",-13316.48],["normal","Decorating",-331.22],
+      ["normal","Pest Control",-690.00],["normal","Council Tax",-10141.66],["normal","Tenant Utilities",-36317.57],
+      ["normal","Rent becoming due to Caretech",-248231.72],["normal","Rent due to other landlords",-3250.00],
+      ["normal","Repairs & Maintenance",-1360.99],["total","Total direct housing costs",-355515.92],
+      ["grand","Gross surplus",169347.23],
+      ["section","Operating / Administrative Costs",0],
+      ["normal","Bank Fees",-311.58],["normal","Professional Fees",-7752.22],["normal","Wages",-53399.33],
+      ["normal","Travel Expenses",-2058.61],["normal","IT software and consumables",-1752.53],["normal","Insurance",-4369.40],
+      ["normal","Legal Expenses",-3600.00],["normal","Staff Training",-344.10],["normal","Telephone & Internet",-372.95],
+      ["grand","Operating surplus",95386.51],["normal","Corporation Tax",0],["grand","Net surplus for the review movement",95386.51]
+    ],
+    mapping:"Permanent P&L mapping applied with no residual classification. The source-period validation exception remains unresolved."
+   },
+   bs:{
+    period:"Source closing balances — worksheet named July 24; internal heading states 31 August 2024",
+    lines:[
+      ["section","Current Assets",0],["normal","Cash at bank",141059.34],["normal","Accounts receivable",1344622.26],
+      ["normal","Less: bad debt provision",-105933.20],["normal","Other receivables",10.00],["normal","Prepayments",34804.15],
+      ["normal","Accrued income",28771.25],["total","Total current assets",1443333.80],
+      ["section","Non-current Assets",0],["normal","Office equipment — net",210.40],["normal","Computer equipment — net",2305.78],
+      ["total","Total non-current assets",2516.18],["grand","Total assets",1445849.98],
+      ["section","Current Liabilities",0],["normal","Accounts payable",72279.54],["normal","Accruals",233000.00],
+      ["normal","Payroll payable — debit balance",-123.48],["normal","PAYE payable",8755.48],["normal","National Insurance payable",12377.14],
+      ["normal","Corporation tax provision",0.20],["normal","Tenant overpayments",25736.86],["normal","Rent overpayments refundable",15131.96],
+      ["normal","Pension contributions payable",3081.08],["normal","Rent payable to Caretech",367853.65],["normal","Student loan deductions payable",412.00],
+      ["exception","Suspense (850) — mapping exception",3410.65],["exception","Rounding (860) — mapping exception",-0.05],
+      ["total","Total current liabilities",741915.03],
+      ["section","Non-current Liabilities",0],["normal","Void Works liability",0],["normal","Start-up loan — Caretech",100000.00],
+      ["total","Total non-current liabilities",100000.00],["total","Total liabilities",841915.03],["grand","Net assets",603934.95],
+      ["section","Equity",0],["normal","Ordinary share capital",10.00],["normal","Retained earnings",128586.13],
+      ["normal","Current financial-year result to date",475338.82],["grand","Total equity",603934.95]
+    ],
+    assets:1445849.98,liabilities:841915.03,equity:603934.95,ar:1344622.26
+   }
+ }
+};
+
+let currentMonth="june";
+
+function f(v,t){
+ if(v===null||v===undefined) return "Data not available";
+ if(t==="money") return Math.abs(v).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+ if(t==="pct") return (v*100).toFixed(1)+"%";
+ if(t==="x") return v.toFixed(2)+"x";
+ return String(v);
+}
+function signed(v){
+ if(Math.abs(v)<0.005) return '<span class="zero">–</span>';
+ const s=Math.abs(v).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+ return v<0?'<span class="neg">('+s+')</span>':s;
+}
+function arrow(cur,prev){
+ if(cur===null||prev===null||cur===undefined||prev===undefined) return ['→','flat'];
+ if(Math.abs(cur-prev)<1e-9) return ['→','flat'];
+ return cur>prev?['↑','up']:['↓','down'];
+}
+function card(label,m){
+ const [a,cls]=arrow(m.v,m.p);
+ const valClass=m.v===null?"value na":"value";
+ const prev=m.p===null?"Data not available":f(m.p,m.t);
+ return `<div class="card kpi"><div class="label">${label}</div><div class="${valClass}">${f(m.v,m.t)}</div>
+ <div class="compare"><span class="arrow ${cls}">${a}</span> vs prior month: ${prev}</div><div class="interp">${m.i}</div></div>`;
+}
+const metricDefs=[
+ ["Total income","income"],["Net surplus / (deficit)","net"],["Gross rent margin","grossMargin"],["Direct housing cost ratio","directRatio"],
+ ["Maintenance cost / income","maintenancePct"],["Maintenance cost per asset","maintenanceAsset"],["Debtor collection %","collection"],
+ ["Receivables-to-Income Ratio","recvIncome"],["Bad debt provision rate","badDebt"],["Utility recovery rate","utility"],
+ ["People cost ratio","people"],["Operating cost ratio","opCost"],["Directors' remuneration / payroll","directors"]
+];
+function renderExec(d){
+ document.getElementById("execKpis").innerHTML=
+   card("Total income",d.metrics.income)+card("Net surplus / (deficit)",d.metrics.net)+card("Gross rent margin",d.metrics.grossMargin)+card("Net assets",d.metrics.netAssets);
+ document.getElementById("businessDescription").textContent=d.business;
+ const hv=document.getElementById("healthVerdict"); hv.className="ragbox "+(d.rag==="RED"?"red":"amber"); hv.textContent=d.verdict;
+ document.getElementById("boardActions").innerHTML=d.actions.map((x,i)=>`<div class="obs"><b>${i+1}. ${x[0]}</b>${x[1]}</div>`).join("");
+ const max=Math.max(Math.abs(d.metrics.income.v),Math.abs(d.metrics.net.v),1);
+ const h1=Math.max(4,Math.abs(d.metrics.income.v)/max*190), h2=Math.max(4,Math.abs(d.metrics.net.v)/max*190);
+ document.getElementById("profitBars").innerHTML=
+  `<div class="bar-group"><div class="bar" style="height:${h1}px;background:var(--navy2)"><span>${f(d.metrics.income.v,"money")}</span></div></div>
+   <div class="bar-group"><div class="bar" style="height:${h2}px;background:${d.metrics.net.v>=0?'var(--green)':'var(--danger)'}"><span>${d.metrics.net.v<0?'(' + f(d.metrics.net.v,"money") + ')':f(d.metrics.net.v,"money")}</span></div></div>`;
+ renderDonut("execDonut","execLegend",[
+  ["Assets",d.bs.assets,"#244e73"],["Liabilities",d.bs.liabilities,"#b04655"],["Net assets",d.bs.equity,"#2e7d32"]
+ ]);
+}
+function renderMetrics(d){
+ document.getElementById("metricCards").innerHTML=metricDefs.map(x=>card(x[0],d.metrics[x[1]])).join("");
+ document.getElementById("benchmarkBody").innerHTML=metricDefs.map(x=>{
+   const m=d.metrics[x[1]]; return `<tr><td>${x[0]}</td><td>${f(m.v,m.t)}</td><td class="amber-text">Data not available</td><td><span class="rag amber">Amber</span></td></tr>`;
+ }).join("");
+}
+function renderRows(lines){
+ return lines.map(r=>{
+   const [typ,label,val]=r;
+   if(typ==="section") return `<tr class="section"><td colspan="2">${label}</td></tr>`;
+   const cls=typ==="total"?"total":typ==="grand"?"grand":typ==="exception"?"exception":"";
+   return `<tr class="${cls}"><td>${label}</td><td class="num">${signed(val)}</td></tr>`;
+ }).join("");
+}
+function renderPnl(d){
+ document.getElementById("pnlKpis").innerHTML=
+   card("Total income",d.metrics.income)+card("Net surplus / (deficit)",d.metrics.net)+card("Gross rent margin",d.metrics.grossMargin)+card("Directors' remuneration / payroll",d.metrics.directors);
+ document.getElementById("pnlPeriodLabel").textContent=d.pnl.period+" | Amount (£)";
+ document.getElementById("pnlBody").innerHTML=renderRows(d.pnl.lines);
+ document.getElementById("sideGrossMargin").textContent=f(d.metrics.grossMargin,"pct");
+ document.getElementById("sideDirectors").textContent=f(d.metrics.directors,"pct");
+ document.getElementById("mappingStatus").textContent=d.pnl.mapping;
+ const note=document.getElementById("periodControlNote");
+ if(d.valid){note.style.display="none";}else{note.style.display="block";note.textContent="Period control exception: "+d.validation+". The figures below are a controlled review movement and should not be treated as a certified one-month July P&L until the source date is resolved."}
+}
+function renderBs(d){
+ document.getElementById("bsKpis").innerHTML=
+   card("Current ratio",d.metrics.currentRatio)+card("Cash ratio",d.metrics.cashRatio)+card("Liabilities to equity",d.metrics.liabilitiesEquity)+card("Net assets",d.metrics.netAssets);
+ document.getElementById("bsPeriodLabel").textContent=d.bs.period+" | Amount (£)";
+ document.getElementById("bsBody").innerHTML=renderRows(d.bs.lines);
+ document.getElementById("sideAR").textContent=f(d.bs.ar,"money");
+ document.getElementById("sideNetAssets").textContent=f(d.bs.equity,"money");
+ renderDonut("bsDonut","bsLegend",[
+  ["Assets",d.bs.assets,"#244e73"],["Liabilities",d.bs.liabilities,"#b04655"],["Net assets",d.bs.equity,"#2e7d32"]
+ ]);
+ const note=document.getElementById("bsControlNote");
+ if(d.valid){note.style.display="none";}else{note.style.display="block";note.textContent="Balance Sheet period control exception: the worksheet named July 24 is headed 31 August 2024. Closing balances are shown for review only until the period is confirmed."}
+}
+function renderDonut(id,legendId,items){
+ const total=items.reduce((s,x)=>s+x[1],0); let start=0,parts=[];
+ items.forEach(x=>{const pct=x[1]/total*100;parts.push(`${x[2]} ${start}% ${start+pct}%`);start+=pct;});
+ document.getElementById(id).style.background=`conic-gradient(${parts.join(",")})`;
+ document.getElementById(legendId).innerHTML=items.map(x=>`<div><span class="sw" style="background:${x[2]}"></span>${x[0]}: ${f(x[1],"money")}</div>`).join("");
+}
+function renderAll(){
+ const d=data[currentMonth];
+ const b=document.getElementById("validationBadge"); b.textContent=d.validation; b.className="validation "+(d.valid?"pass":"review");
+ renderExec(d);renderMetrics(d);renderPnl(d);renderBs(d);
+}
+document.querySelectorAll(".month-btn").forEach(b=>b.addEventListener("click",()=>{
+ document.querySelectorAll(".month-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ currentMonth=b.dataset.month;renderAll();
+}));
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+ t.classList.add("active");document.getElementById(t.dataset.tab).classList.add("active");
+}));
+renderAll();
+</script>
+</body>
+</html>
