@@ -24,3 +24,8 @@ Python
 Streamlit
 pandas
 openpyxl (Excel file support)
+
+# Sample data
+Use the included Trial Balance/Transaction level_data.xls file or upload your own CSV/XLSX dataset. For the full dashboard experience, include columns similar to:
+Date , Transactions , Receipts ,Disbursement 
+The app gracefully handles datasets that do not contain every recommended column
