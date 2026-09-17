@@ -10,3 +10,17 @@ The resulting approach included:
 • Variance and exception reporting
 • Maintenance cost drill-down to transaction level
 • Management commentary focused on action
+
+# FEATURES
+Upload CSV and Excel datasets.
+Upload Prompt Protocol titled HTML + AI Dashboard.
+Runs Prompt on Gen AI and Generate downloadable HTML Dashboard
+Prompt can also work with Xero through an MCP 
+Generate business intelligent and Financial Reporting Information
+
+
+# Tech Stack
+Python
+Streamlit
+pandas
+openpyxl (Excel file support)
